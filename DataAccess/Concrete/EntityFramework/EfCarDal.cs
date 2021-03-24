@@ -1,5 +1,7 @@
-﻿using DataAccess.Abstract;
+﻿using Core.DataAccess.EntityFramework;
+using DataAccess.Abstract;
 using Entities.Concrete;
+using Entities.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,56 +11,21 @@ using System.Text;
 
 namespace DataAccess.Concrete.EntityFramework
 {
-    public class EfCarDal : ICarDal
+    public class EfCarDal : EfEntityRepositoryBase<CarProps, RcpContext>, ICarDal
     {
-        public void Add(CarProps entity)
+        public List<CarDetailDto> GetCarDetails()
         {
             using (RcpContext context = new RcpContext())
-
             {
-                var addedEntity = context.Entry(entity);
-                addedEntity.State = EntityState.Added;
-                context.SaveChanges();
-            }
-        }
+                var result = from c in context.Cars
+                             join b in context.Brands
+                             on c.BrandId equals b.Id
 
-        public void Delete(CarProps entity)
-        {
-            using (RcpContext context = new RcpContext())
+                             join co in context.Colours
+                             on c.ColourId equals co.Id
 
-            {
-                var deletedEntity = context.Entry(entity);
-                deletedEntity.State = EntityState.Deleted;
-                context.SaveChanges();
-            }
-        }
-
-        public CarProps Get(Expression<Func<CarProps, bool>> filter)
-        {
-            using (RcpContext context=new RcpContext())
-            {
-                return context.Set<CarProps>().SingleOrDefault(filter);
-            }
-        }
-
-        public List<CarProps> GetAll(Expression<Func<CarProps, bool>> filter = null)
-        {
-            using (RcpContext context= new RcpContext())
-            {
-                return filter == null
-                    ? context.Set<CarProps>().ToList()
-                    : context.Set<CarProps>().Where(filter).ToList();
-            }
-        }
-
-        public void Update(CarProps entity)
-        {
-            using (RcpContext context = new RcpContext())
-
-            {
-                var updatedEntity = context.Entry(entity);
-                updatedEntity.State = EntityState.Modified;
-                context.SaveChanges();
+                             select new CarDetailDto { CarId = c.Id, BrandId=b.Id, ColourId=co.Id, BrandName=b.Name, ColourName=co.Name, DailyPrice=c.DailyPrice };
+                return result.ToList();
             }
         }
     }
